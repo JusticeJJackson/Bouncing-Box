@@ -2,6 +2,7 @@ import os
 import time
 import math
 import random
+import pygame
 
 # create a 2d square grid of ' ' strings that is 10 x 10 in size that codes it in a simple way
 
@@ -21,7 +22,7 @@ Distance To Walls
 
 class Box:
     def __init__(
-        self, initialY: int, initialX: int, veloY: int, veloX: int, boxStr: str
+        self, initialY, initialX, veloY, veloX, boxStr: str
     ) -> None:
         self.yPos = initialY
         self.xPos = initialX
@@ -31,7 +32,7 @@ class Box:
 
 
 class Grid:
-    def __init__(self, sizeY: int, sizeX: int) -> None:
+    def __init__(self, sizeY, sizeX) -> None:
         self.sizeY = sizeY
         self.sizeX = sizeX
         self.grid = []
@@ -254,6 +255,34 @@ def changeBoxColor(box: Box, color=None):
         box.str = boxes[color]
 
 
+def draw_grid(grid, screen, box_size, box):
+    screen.fill((0, 0, 0))
+    for y, row in enumerate(grid.grid):
+        for x, cell in enumerate(row):
+            if cell == box.str:
+                pygame.draw.rect(screen, (255, 255, 255), (x * box_size, y * box_size, box_size, box_size))
+    pygame.display.flip()
+
+def polyrhythm(initialY: int, initialX: int, beat: int, bpm: int, box: Box, grid: Grid):
+    xLen = grid.sizeX
+    yLen = grid.sizeY
+
+    beatsPerSecond = bpm / 60
+
+    timePerBeat = 1 / beatsPerSecond
+
+    # timePerMeasure = 4 * timePerBeat
+
+    timePerBounce = (4 / beat) * timePerBeat
+
+    xBounceDistance = xLen / beat
+
+    xVelo = xBounceDistance // timePerBounce
+
+    yVelo = yLen // timePerBounce
+
+    return xVelo, yVelo
+
 def main(
     gridSizeY: int,
     gridSizeX: int,
@@ -264,29 +293,29 @@ def main(
     xVelocity: int,
     disco: bool,
 ):
-    grid = Grid(10, 10)
+    pygame.init()
+    box_size = 10
+    screen = pygame.display.set_mode((gridSizeX * box_size, gridSizeY * box_size))
+    pygame.display.set_caption("Bouncing Box Simulation")
+    clock = pygame.time.Clock()
 
+    grid = Grid(gridSizeY, gridSizeX)
     box = Box(initialY, initialX, yVelocity, xVelocity, "■")
-
+    #x , y = polyrhythm(0, 0 , 4, 120 , box, grid)
+    #box.yVelo, box.xVelo = x, y
     grid.setGrid(box)
 
-    for frame in range(60 * 15):
+    running = True
+    frame = 0
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
         if disco:
             changeBoxColor(box)
 
-        clear_terminal()
-
-        grid.printGrid(frame)
-
-        # each loop clear the output of terminal
         grid.clearGrid(box)
-
-        """
-        if the new position has one of the 1 is out of bounds on the x or y
-        have the 1 just hit the wall, then reverse its velocity, have the 
-        other cordinate only move the amount proportinal to how the other
-        value moved
-        """
 
         if isColision(box, grid.grid):
             handleColision(box, grid.grid)
@@ -295,9 +324,17 @@ def main(
             box.yPos += box.yVelo
 
         grid.setGrid(box)
+        draw_grid(grid, screen, box_size, box)
 
-        # wait one frame length before continuing
-        time.sleep(1 / fps)
+        frame += 1
+        clock.tick(fps)
+
+    pygame.quit()
 
 
-main(1, 3, 20, 1, 2, False)
+main(50, 70, 2, 3, 45, 2, -4, True)
+
+
+
+
+#polyrhythm(0, 0, 4, 120, Box(1, 1, 1, 1, " "), Grid(8, 8))
